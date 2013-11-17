@@ -14,16 +14,16 @@
 	This file is part of ST-Sound
 
 	ST-Sound is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	ST-Sound is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	GNU Lesser General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
+	You should have received a copy of the GNU Lesser General Public License
 	along with ST-Sound; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
@@ -88,51 +88,6 @@ void	CDcAdjuster::AddSample(ymint sample)
 
 
 
-
-//----------------------------------------------------------------------
-// Very simple low pass filter.
-// Filter coefs are 0.25,0.5,0.25
-//----------------------------------------------------------------------
-static	ymsample	*pInternalInput = NULL;
-static	yms32		internalInputLen = 0;
-static	ymsample	oldFilter[2] = {0,0};
-
-ymsample *getBufferCopy(ymsample *pIn,ymint len)
-{
-		if (len>internalInputLen)
-		{
-			if (pInternalInput) free(pInternalInput);
-			pInternalInput = (ymsample*)malloc(len*sizeof(ymsample));
-			internalInputLen = len;
-		}
-		memcpy(pInternalInput,pIn,len*sizeof(ymsample));
-		return pInternalInput;
-}
-
-#define	DSP_FILTER(a,b,c)	(((ymint)(a)+((ymint)b+(ymint)b)+(ymint)(c))>>2)
-
-
-// Cheap but efficient low pass filter ( 0.25,0.5,0.25 )
-// filter: out -> out
-void	lowpFilterProcess(ymsample *pOut,ymint len)		// private
-{
-ymsample *pIn;
-ymint i;
-
-		pIn = getBufferCopy(pOut,len);
-		if (len>0) *pOut++ = DSP_FILTER(oldFilter[0],oldFilter[1],pIn[0]);
-		if (len>1) *pOut++ = DSP_FILTER(oldFilter[1],pIn[0],pIn[1]);
-		oldFilter[0] = pIn[len-2];
-		oldFilter[1] = pIn[len-1];
-		for (i=2;i<len;i++)
-		{
-			*pOut++ = DSP_FILTER(pIn[0],pIn[1],pIn[2]);
-			pIn++;
-		}
-}
-
-
-
 static	ymu8 *ym2149EnvInit(ymu8 *pEnv,ymint a,ymint b)
 {
 ymint i;
@@ -153,6 +108,8 @@ CYm2149Ex::CYm2149Ex(ymu32 masterClock,ymint prediv,ymu32 playRate)
 {
 ymint i,env;
 
+
+		m_bFilter = true;
 
 		frameCycle = 0;
 		if (ymVolumeTable[15]==32767)		// excuse me for that bad trick ;-)
@@ -201,7 +158,7 @@ void	CYm2149Ex::setClock(ymu32 _clock)
 }
 
 
-ymu32 CYm2149Ex::toneStepCompute(ymint rHigh,ymint rLow)
+ymu32 CYm2149Ex::toneStepCompute(ymu8 rHigh,ymu8 rLow)
 {
 
 	ymint per = rHigh&15;
@@ -224,7 +181,7 @@ ymu32 CYm2149Ex::toneStepCompute(ymint rHigh,ymint rLow)
 	return istep;
 }
 
-ymu32 CYm2149Ex::noiseStepCompute(ymint rNoise)
+ymu32 CYm2149Ex::noiseStepCompute(ymu8 rNoise)
 {
 
 
@@ -252,7 +209,7 @@ ymu32	CYm2149Ex::rndCompute(void)
 		return (rBit ? 0 : 0xffff);
 }
 
-ymu32 CYm2149Ex::envStepCompute(ymint rHigh,ymint rLow)
+ymu32 CYm2149Ex::envStepCompute(ymu8 rHigh,ymu8 rLow)
 {
 
 
@@ -277,25 +234,30 @@ ymu32 CYm2149Ex::envStepCompute(ymint rHigh,ymint rLow)
 
 void	CYm2149Ex::reset(void)
 {
-		writeRegister(7,0x3f);
-		writeRegister(8,0);
-		writeRegister(9,0);
-		writeRegister(10,0);
-		currentNoise = 0xffff;
-		rndRack = 1;
-		sidStop(0);
-		sidStop(1);
-		sidStop(2);
 
-		envShape = 0;
-		envPhase = 0;
-		envPos = 0;
+	for (int i=0;i<14;i++)
+		writeRegister(i,0);
 
-		m_dcAdjust.Reset();
+	writeRegister(7,0xff);
 
-		memset(specialEffect,0,sizeof(specialEffect));
+	currentNoise = 0xffff;
+	rndRack = 1;
+	sidStop(0);
+	sidStop(1);
+	sidStop(2);
 
-		syncBuzzerStop();
+	envShape = 0;
+	envPhase = 0;
+	envPos = 0;
+
+	m_dcAdjust.Reset();
+
+	memset(specialEffect,0,sizeof(specialEffect));
+
+	syncBuzzerStop();
+
+	m_lowPassFilter[0] = 0;
+	m_lowPassFilter[1] = 0;
 
 }
 
@@ -344,6 +306,14 @@ void	CYm2149Ex::sidVolumeCompute(ymint voice,ymint *pVol)
 			}
 
 		}
+}
+
+int CYm2149Ex::LowPassFilter(int in)
+{
+	const int out = (m_lowPassFilter[0]>>2) + (m_lowPassFilter[1]>>1) + (in>>2);
+	m_lowPassFilter[0] = m_lowPassFilter[1];
+	m_lowPassFilter[1] = in;
+	return out;
 }
 
 ymsample CYm2149Ex::nextSample(void)
@@ -406,7 +376,8 @@ ymint bt,bn;
 	// Normalize process
 	//---------------------------------------------------
 		m_dcAdjust.AddSample(vol);
-		return (vol - m_dcAdjust.GetDcLevel());
+		const int in = vol - m_dcAdjust.GetDcLevel();
+		return (m_bFilter) ? LowPassFilter(in) : in;
 }
 
 
@@ -527,31 +498,28 @@ void	CYm2149Ex::writeRegister(ymint reg,ymint data)
 void	CYm2149Ex::update(ymsample *pSampleBuffer,ymint nbSample)
 {
 
-
 		ymsample *pBuffer = pSampleBuffer;
-		ymint	nbs = nbSample;
-
-
 		if (nbSample>0)
 		{
 			do
 			{
-				*pSampleBuffer++ = nextSample();
+				*pBuffer++ = nextSample();
 			}
 			while (--nbSample);
 		}
-
-		lowpFilterProcess((ymsample*)pBuffer,nbs);
 
 }
 
 void	CYm2149Ex::drumStart(ymint voice,ymu8 *pDrumBuffer,ymu32 drumSize,ymint drumFreq)
 {
-	specialEffect[voice].drumData = pDrumBuffer;
-	specialEffect[voice].drumPos = 0;
-	specialEffect[voice].drumSize = drumSize;
-	specialEffect[voice].drumStep = (drumFreq<<DRUM_PREC)/replayFrequency;
-	specialEffect[voice].bDrum = YMTRUE;
+	if ((pDrumBuffer) && (drumSize))
+	{
+		specialEffect[voice].drumData = pDrumBuffer;
+		specialEffect[voice].drumPos = 0;
+		specialEffect[voice].drumSize = drumSize;
+		specialEffect[voice].drumStep = (drumFreq<<DRUM_PREC)/replayFrequency;
+		specialEffect[voice].bDrum = YMTRUE;
+	}
 }
 
 void	CYm2149Ex::drumStop(ymint voice)

@@ -5,7 +5,7 @@
 	Copyright (C) 1995-1999 Arnaud Carre ( http://leonard.oxg.free.fr )
 
 	YM Music Driver
-	
+
 -----------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
@@ -13,16 +13,16 @@
 	This file is part of ST-Sound
 
 	ST-Sound is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	ST-Sound is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	GNU Lesser General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
+	You should have received a copy of the GNU Lesser General Public License
 	along with ST-Sound; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "YmMusic.h"
 
 #define	_LINEAR_OVRS				// Activate linear oversampling (best quality) Only used for DigiMix and UniversalTracker YM file type
@@ -58,6 +59,8 @@ CYmMusic::CYmMusic(ymint _replayRate)
 	nbDrum = 0;
 	pDrumTab = NULL;
 	setLoopMode(YMFALSE);
+
+	m_pTimeInfo = NULL;
 }
 
 void	CYmMusic::setTimeControl(ymbool bTime)
@@ -86,8 +89,12 @@ void	CYmMusic::setPlayerRate(ymint rate)
 
 ymu32 CYmMusic::getPos()
 {
-	if (!isSeekable()) return 0;
-	if ((nbFrame>0) && (playerRate>0))
+	if ((songType>=YM_MIX1) && (songType<YM_MIXMAX))
+	{
+		// avoid overflow after 97 seconds and keep only 32bit computing
+		return m_iMusicPosInMs;
+	}
+	else if ((nbFrame>0) && (playerRate>0))
 	{
 		return ((ymu32)currentFrame*1000)/(ymu32)playerRate;
 	}
@@ -98,13 +105,48 @@ ymu32 CYmMusic::getPos()
 
 ymu32	CYmMusic::getMusicTime(void)
 {
-		if ((nbFrame>0) && (playerRate>0))
-		{
-			return ((ymu32)nbFrame*1000)/(ymu32)playerRate;
-		}
-		else
-			return 0;
 
+	if ((songType>=YM_MIX1) && (songType<YM_MIXMAX))
+	{
+		return m_musicLenInMs;
+	}
+	else if ((nbFrame>0) && (playerRate>0))
+	{
+		return ((ymu32)nbFrame*1000)/(ymu32)playerRate;
+	}
+	else
+		return 0;
+
+}
+
+
+void	CYmMusic::setMixTime(ymu32 time)
+{
+	if (time > m_musicLenInMs)
+		return;
+
+	assert(m_pTimeInfo);
+	for (int i=0;i<m_nbTimeKey;i++)
+	{
+		ymu32 tEnd = i < (m_nbTimeKey-1) ? m_pTimeInfo[i+1].time : m_musicLenInMs;
+		if ((time >= m_pTimeInfo[i].time) && (time < tEnd))
+		{
+			mixPos = m_pTimeInfo[i].nBlock;
+			pCurrentMixSample = pBigSampleBuffer + pMixBlock[mixPos].sampleStart;
+			currentSampleLength = (pMixBlock[mixPos].sampleLength)<<12;
+			currentPente = (((ymu32)pMixBlock[mixPos].replayFreq)<<12) / replayRate;
+
+			ymu32 len = tEnd - m_pTimeInfo[i].time;
+			ymu32 t0 = ((time - m_pTimeInfo[i].time) * pMixBlock[mixPos].sampleLength) / len;
+
+			currentPos = t0 << 12;
+			nbRepeat = m_pTimeInfo[i].nRepeat;
+			break;
+		}
+	}
+
+	m_iMusicPosInMs = time;
+	m_iMusicPosAccurateSample = 0;
 }
 
 ymu32	CYmMusic::setMusicTime(ymu32 time)
@@ -124,9 +166,22 @@ ymu32	CYmMusic::setMusicTime(ymu32 time)
 			if (newTime>=getMusicTime()) newTime = 0;
 			currentFrame = (newTime*(ymu32)playerRate)/1000;
 		}
+		else if ((songType>=YM_MIX1) && (songType<YM_MIXMAX))
+		{
+			assert(m_pTimeInfo);
+			setMixTime(time);
+		}
 
 		return newTime;
 }
+
+void	CYmMusic::restart(void)
+{
+	setMusicTime(0);
+	bMusicOver = YMFALSE;
+}
+
+
 
 void	CYmMusic::getMusicInfo(ymMusicInfo_t *pInfo)
 {
@@ -138,10 +193,8 @@ void	CYmMusic::getMusicInfo(ymMusicInfo_t *pInfo)
 			pInfo->pSongType = pSongType;
 			pInfo->pSongPlayer = pSongPlayer;
 
-			if (playerRate>0)
-				pInfo->musicTimeInSec = (ymu32)nbFrame/(ymu32)playerRate;
-			else
-				pInfo->musicTimeInSec = 0;
+			pInfo->musicTimeInMs = getMusicTime();
+			pInfo->musicTimeInSec = pInfo->musicTimeInMs / 1000;
 		}
 }
 
@@ -196,6 +249,8 @@ ymint	vblNbSample;
 		if ((songType >= YM_MIX1) && (songType < YM_MIXMAX))
 		{
 			stDigitMix(sampleBuffer,nbSample);
+
+
 		}
 		else if ((songType >= YM_TRACKER1) && (songType<YM_TRACKERMAX))
 		{
@@ -473,6 +528,47 @@ void	CYmMusic::player(void)
 
 */
 
+void	CYmMusic::computeTimeInfo(void)
+{
+
+	assert(NULL == m_pTimeInfo);
+
+	//-------------------------------------------
+	// Compute nb of mixblock
+	//-------------------------------------------
+	m_nbTimeKey = 0;
+	ymint i;
+	for (i=0;i<nbMixBlock;i++)
+	{
+		if (pMixBlock[i].nbRepeat >= 32)
+			pMixBlock[i].nbRepeat = 32;
+
+		m_nbTimeKey += pMixBlock[i].nbRepeat;
+	}
+
+	//-------------------------------------------
+	// Parse all mixblock keys
+	//-------------------------------------------
+	m_pTimeInfo = (TimeKey*)malloc(sizeof(TimeKey) * m_nbTimeKey);
+	TimeKey *pKey = m_pTimeInfo;
+	ymu32 time = 0;
+
+	for (i=0;i<nbMixBlock;i++)
+	{
+		for (ymint j=0;j<pMixBlock[i].nbRepeat;j++)
+		{
+			pKey->time = time;
+			pKey->nRepeat = pMixBlock[i].nbRepeat - j;
+			pKey->nBlock = i;
+			pKey++;
+
+			time += (pMixBlock[i].sampleLength * 1000) / pMixBlock[i].replayFreq;
+		}
+	}
+	m_musicLenInMs = time;
+
+}
+
 void	CYmMusic::readNextBlockInfo(void)
 {
 	nbRepeat--;
@@ -483,12 +579,15 @@ void	CYmMusic::readNextBlockInfo(void)
 		{
 			mixPos = 0;
 			if (!bLoop) bMusicOver = YMTRUE;
+
+			m_iMusicPosAccurateSample = 0;
+			m_iMusicPosInMs = 0;
 		}
 		nbRepeat = pMixBlock[mixPos].nbRepeat;
 	}
 	pCurrentMixSample = pBigSampleBuffer + pMixBlock[mixPos].sampleStart;
 	currentSampleLength = (pMixBlock[mixPos].sampleLength)<<12;
-	currentPente = (((ymu32)pMixBlock[mixPos].replayFreq)<<12) / PC_DAC_FREQ;
+	currentPente = (((ymu32)pMixBlock[mixPos].replayFreq)<<12) / replayRate;
 	currentPos &= ((1<<12)-1);
 }
 
@@ -503,6 +602,10 @@ void	CYmMusic::stDigitMix(ymsample *pWrite16,ymint nbs)
 			nbRepeat = -1;
 			readNextBlockInfo();
 		}
+
+		m_iMusicPosAccurateSample += nbs * 1000;
+		m_iMusicPosInMs += ((m_iMusicPosAccurateSample) / (replayRate));
+		m_iMusicPosAccurateSample %= (replayRate);
 
 		if (nbs) do
 		{
@@ -606,7 +709,6 @@ ymTrackerLine_t *pLine;
 	  	for (i=0;i<nbVoice;i++)
 		{
 			ymint n;
-			ymint freq = 
 			pVoice[i].sampleFreq = ((ymint)pLine->freqHigh<<8) | pLine->freqLow;
 			if (pVoice[i].sampleFreq)
 			{
@@ -671,7 +773,8 @@ double	step;
 #ifdef _LINEAR_OVRS
 			ymint vb = va;
 			if (samplePos < (sampleEnd-(1<<YMTPREC)))
-				ymint vb = pVolumeTab[pSample[(samplePos>>YMTPREC)+1]];
+				vb = pVolumeTab[pSample[(samplePos>>YMTPREC)+1]];
+
 			ymint frac = samplePos & ((1<<YMTPREC)-1);
 			va += (((vb-va)*frac)>>YMTPREC);
 #endif
@@ -711,7 +814,7 @@ ymint _nbs;
 				// Lit la partition ymTracker
 				ymTrackerPlayer(ymTrackerVoice);
 				if (bMusicOver) return;
-				ymTrackerNbSampleBefore = YMTNBSRATE;
+				ymTrackerNbSampleBefore = replayRate / playerRate;
 			}
 			_nbs = ymTrackerNbSampleBefore;		// nb avant playerUpdate.
 			if (_nbs>nbSample) _nbs = nbSample;

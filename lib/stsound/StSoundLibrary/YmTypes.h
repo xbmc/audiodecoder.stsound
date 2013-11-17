@@ -4,7 +4,7 @@
 
 	Copyright (C) 1995-1999 Arnaud Carre ( http://leonard.oxg.free.fr )
 
-	Define YM types for multi-platform compilcation.
+	Define YM types for multi-platform compilation.
 	Change that file depending of your platform. Please respect the right size
 	for each type.
 
@@ -15,16 +15,16 @@
 	This file is part of ST-Sound
 
 	ST-Sound is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	ST-Sound is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	GNU Lesser General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
+	You should have received a copy of the GNU Lesser General Public License
 	along with ST-Sound; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
@@ -33,46 +33,45 @@
 #ifndef __YMTYPES__
 #define __YMTYPES__
 
+#ifdef _MSC_VER
+
+typedef __int8 int8_t;
+typedef unsigned __int8 uint8_t;
+typedef __int16 int16_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+
+#else
+#include <stdint.h>
+#endif
+
+
 #define YM_INTEGER_ONLY
 
 //-----------------------------------------------------------
 // Platform specific stuff
 //-----------------------------------------------------------
 
-#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
-
-// These settings are ok for Windows 32bits platform.
-
 #ifdef YM_INTEGER_ONLY
-#if defined(__linux__) || defined(__FreeBSD__)
-#include <inttypes.h>
-typedef 	int64_t				yms64;
+typedef	int64_t		yms64;
 #else
-typedef		__int64				yms64;
-#endif
-#else
-typedef		float				ymfloat;
+typedef	float		ymfloat;
 #endif
 
-typedef		signed char			yms8;			//  8 bits signed integer
-typedef		signed short		yms16;			// 16 bits signed integer
-typedef		signed int              yms32;			// 32 bits signed integer
+typedef	int8_t		yms8;			//  8 bits signed integer
+typedef	int16_t		yms16;			// 16 bits signed integer
+typedef	int32_t		yms32;			// 32 bits signed integer
 
-typedef		unsigned char		ymu8;			//  8 bits unsigned integer
-typedef		unsigned short		ymu16;			// 16 bits unsigned integer
-typedef		unsigned int            ymu32;			// 32 bits unsigned integer
+typedef	uint8_t		ymu8;			//  8 bits unsigned integer
+typedef	uint16_t	ymu16;			// 16 bits unsigned integer
+typedef	uint32_t	ymu32;			// 32 bits unsigned integer
 
-typedef		int					ymint;			// Native "int" for speed purpose. StSound suppose int is signed and at least 32bits. If not, change it to match to yms32
+typedef	yms32		ymint;			// Native "int" for speed purpose. StSound suppose int is signed and at least 32bits. If not, change it to match to yms32
+typedef	char		ymchar;			// 8 bits char character (used for null terminated strings)
 
-typedef		char				ymchar;			// 8 bits char character (used for null terminated strings)
-
-#else
-
-	fail
-		
-	Please make the right definition for your platform ( for 8,16,32 signed and unsigned integer)
-
-#endif
 
 #ifndef NULL
 #define NULL	(0L)

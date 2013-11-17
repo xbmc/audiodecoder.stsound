@@ -13,16 +13,16 @@
 	This file is part of ST-Sound
 
 	ST-Sound is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	ST-Sound is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	GNU Lesser General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
+	You should have received a copy of the GNU Lesser General Public License
 	along with ST-Sound; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
@@ -35,15 +35,13 @@
 #include "YmTypes.h"
 #include "StSoundLibrary.h"
 #include "Ym2149Ex.h"
-#include "Ymload.h"
+#include "YmLoad.h"
 #include "digidrum.h"
 
 #define	MAX_DIGIDRUM	128
 
 #define	YMTPREC		16
 #define	MAX_VOICE	8
-#define	PC_DAC_FREQ	44100
-#define	YMTNBSRATE	(PC_DAC_FREQ/50)
 
 typedef enum
 {
@@ -136,6 +134,7 @@ public:
 	ymu32	getPos(void);
 	ymu32	getMusicTime(void);
 	ymu32	setMusicTime(ymu32 time);
+	void	restart(void);
 	void	play(void);
 	void	pause(void);
 	void	stop(void);
@@ -144,7 +143,14 @@ public:
 	void	getMusicInfo(ymMusicInfo_t *pInfo);
 	void	setLoopMode(ymbool bLoop);
 	char	*getLastError(void);
-	int		 readYmRegister(ymint reg)		{ return ymChip.readRegister(reg); }
+	int		readYmRegister(ymint reg)			{ return ymChip.readRegister(reg); }
+	void	setLowpassFilter(ymbool bActive)	{ ymChip.setFilter(bActive); }
+
+	ymbool		getMusicOver(void)	const	{ return (bMusicOver); }
+	ymint		GetNbFrame()		const	{ return nbFrame; }
+	ymint		GetStreamInc()		const	{ return streamInc; }
+	const ymu8*	GetDataStream()		const	{ return pDataStream; }
+
 
 //-------------------------------------------------------------
 // WAVE Generator
@@ -160,7 +166,7 @@ private:
 	void	setPlayerRate(int rate);
 	void	setAttrib(int _attrib);
 	void	setLastError(char *pError);
-	ymu8 *depackFile(void);
+	ymu8 *depackFile(ymu32 size);
 	ymbool	deInterleave(void);
 	void	readYm6Effect(ymu8 *pReg,int code,int prediv,int count);
 	void	player(void);
@@ -200,6 +206,9 @@ private:
 //-------------------------------------------------------------
 	void	readNextBlockInfo(void);
 	void	stDigitMix(signed short *pWrite16,int nbs);
+	void	computeTimeInfo(void);
+	void	setMixTime(ymu32 time);
+
 	ymint	nbRepeat;
 	ymint	nbMixBlock;
 	mixBlock_t *pMixBlock;
@@ -209,6 +218,20 @@ private:
 	ymu32	currentSampleLength;
 	ymu32	currentPente;
 	ymu32	currentPos;
+
+
+	struct TimeKey
+	{
+		ymu32	time;
+		ymu16	nRepeat;
+		ymu16	nBlock;
+	};
+
+	ymint		m_nbTimeKey;
+	TimeKey	*	m_pTimeInfo;
+	ymu32		m_musicLenInMs;
+	ymu32		m_iMusicPosAccurateSample;
+	ymu32		m_iMusicPosInMs;
 
 //-------------------------------------------------------------
 // YM-Universal-Tracker

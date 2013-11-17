@@ -4,9 +4,8 @@
 
 	Copyright (C) 1995-1999 Arnaud Carre ( http://leonard.oxg.free.fr )
 
-	Sample datas of some common YM music. ( YM2 format )
-	YM3 or greater uses sample data inside the music file.
-	
+	Manage YM file depacking and parsing
+
 -----------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
@@ -29,11 +28,32 @@
 
 -----------------------------------------------------------------------------*/
 
-#ifndef __DIGIDRUM__
-#define __DIGIDRUM__
+#ifndef __YMLOAD__
+#define	__YMLOAD__
 
-extern ymu8		*	sampleAdress[];
-extern ymu32		sampleLen[];
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#pragma pack(1)
+typedef struct
+{
+	ymu8	size;
+	ymu8	sum;
+	char	id[5];
+	ymu32	packed;
+	ymu32	original;
+	ymu8	reserved[5];
+	ymu8	level;
+	ymu8	name_lenght;
+} lzhHeader_t;
+#pragma pack()
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
+
 

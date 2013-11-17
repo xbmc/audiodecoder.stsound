@@ -14,16 +14,16 @@
 	This file is part of ST-Sound
 
 	ST-Sound is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	ST-Sound is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	GNU Lesser General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
+	You should have received a copy of the GNU Lesser General Public License
 	along with ST-Sound; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
@@ -38,7 +38,6 @@
 #define	SPECTRUM_CLOCK	1773400L
 #define	MFP_CLOCK		2457600L
 #define	NOISESIZE		16384
-#define	MAX_NBSAMPLE	1024
 #define	DRUM_PREC		15
 
 #define	PI				3.1415926
@@ -105,6 +104,7 @@ public:
 		void	syncBuzzerStart(ymint freq,ymint envShape);
 		void	syncBuzzerStop(void);
 
+		void	setFilter(ymbool bFilter)		{ m_bFilter = bFilter; }
 
 private:
 
@@ -113,19 +113,20 @@ private:
 		ymu32	frameCycle;
 		ymu32	cyclePerSample;
 		inline	ymsample nextSample(void);
-		ymu32 toneStepCompute(ymint rHigh,ymint rLow);
-		ymu32 noiseStepCompute(ymint rNoise);
-		ymu32 envStepCompute(ymint rHigh,ymint rLow);
+		ymu32 toneStepCompute(ymu8 rHigh,ymu8 rLow);
+		ymu32 noiseStepCompute(ymu8 rNoise);
+		ymu32 envStepCompute(ymu8 rHigh,ymu8 rLow);
 		void	updateEnvGen(ymint nbSample);
 		void	updateNoiseGen(ymint nbSample);
 		void	updateToneGen(ymint voice,ymint nbSample);
 		ymu32	rndCompute(void);
 
 		void	sidVolumeCompute(ymint voice,ymint *pVol);
+		inline int		LowPassFilter(int in);
 
 		ymint	replayFrequency;
 		ymu32	internalClock;
-		ymint	registers[14];
+		ymu8	registers[14];
 
 		ymu32	cycleSample;
 		ymu32	stepA,stepB,stepC;
@@ -154,7 +155,8 @@ private:
 		ymu32	syncBuzzerPhase;
 		ymint	syncBuzzerShape;
 
-
+		int		m_lowPassFilter[2];
+		ymbool	m_bFilter;
 };
 
 #endif

@@ -115,7 +115,8 @@ void ADDON_Announce(const char *flag, const char *sender, const char *message, c
 }
 
 void* Init(const char* strFile, unsigned int filecache, int* channels,
-           int* samplerate, int* bitspersample, int64_t* totaltime)
+           int* samplerate, int* bitspersample, int64_t* totaltime,
+           int* bitrate, AEDataFormat* format, const AEChannel** channelinfo)
 {
   YMMUSIC *pMusic = (YMMUSIC*)new CYmMusic;
 
@@ -138,6 +139,9 @@ void* Init(const char* strFile, unsigned int filecache, int* channels,
     *samplerate = 44100;
     *bitspersample = 16;
     *totaltime = info.musicTimeInSec*1000;
+    *format = AE_FMT_S16NE;
+    *channelinfo = NULL;
+    *bitrate = 0;
     return pMusic;
   }
 
@@ -199,5 +203,10 @@ bool ReadTag(const char* strFile, char* title, char* artist, int* length)
 
   ymMusicDestroy(pMusic);
   return *length != 0;
+}
+
+int TrackCount(const char* strFile)
+{
+  return 1;
 }
 }
