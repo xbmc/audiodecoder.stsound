@@ -113,8 +113,10 @@ static int make_table (int nchar, uchar far *bitlen,
         start[i] >>= jutbits;
         weight[i] = 1U << (tablebits - i);
     }
-    while (i <= 16)
-        weight[i++] = 1U << (16 - i);
+    while (i <= 16) {
+        weight[i] = 1U << (16 - i);
+        ++i;
+    }
 
     i = start[tablebits + 1] >> jutbits;
     if (i != (ushort) (1U << 16))

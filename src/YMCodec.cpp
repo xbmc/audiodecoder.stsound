@@ -176,6 +176,8 @@ bool DeInit(void* context)
 {
   ymMusicStop((YMMUSIC*)context);
   ymMusicDestroy((YMMUSIC*)context);
+
+  return true;
 }
 
 bool ReadTag(const char* strFile, char* title, char* artist, int* length)
@@ -184,7 +186,7 @@ bool ReadTag(const char* strFile, char* title, char* artist, int* length)
 
   void* file = XBMC->OpenFile(strFile,0);
   if (!file)
-    return NULL;
+    return false;
   int len = XBMC->GetFileLength(file);
   char *data = new char[len];
   XBMC->ReadFile(file, data, len);
