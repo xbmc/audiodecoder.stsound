@@ -23,3 +23,5 @@ set(STSOUND_SOURCES src/YMCodec.cpp
                     lib/stsound/StSoundLibrary/YmUserInterface.cpp)
 
 build_addon(audiodecoder.stsound STSOUND DEPLIBS)
+
+include(CPack)
