@@ -114,34 +114,58 @@ void ADDON_Announce(const char *flag, const char *sender, const char *message, c
 {
 }
 
+#define SET_IF(ptr, value) \
+{ \
+  if ((ptr)) \
+   *(ptr) = (value); \
+}
+
 void* Init(const char* strFile, unsigned int filecache, int* channels,
            int* samplerate, int* bitspersample, int64_t* totaltime,
            int* bitrate, AEDataFormat* format, const AEChannel** channelinfo)
 {
-  YMMUSIC *pMusic = (YMMUSIC*)new CYmMusic;
+  if (!strFile)
+    return NULL;
+
+  YMMUSIC *pMusic = ymMusicCreate();
+  if (!pMusic)
+    return NULL;
 
   void* file = XBMC->OpenFile(strFile,0);
   if (!file)
     return NULL;
   int len = XBMC->GetFileLength(file);
   char *data = new char[len];
+  if (!data)
+  {
+    XBMC->CloseFile(file);
+    ymMusicDestroy(pMusic);
+    return NULL;
+  }
   XBMC->ReadFile(file, data, len);
   XBMC->CloseFile(file);
 
-  if (ymMusicLoadMemory(pMusic, data, len))
+  int res = ymMusicLoadMemory(pMusic, data, len);
+  delete[] data;
+  if (res)
   {
     ymMusicSetLoopMode(pMusic, YMFALSE);
     ymMusicPlay(pMusic);
     ymMusicInfo_t info;
     ymMusicGetInfo(pMusic, &info);
 
-    *channels = 1;
-    *samplerate = 44100;
-    *bitspersample = 16;
-    *totaltime = info.musicTimeInSec*1000;
+    SET_IF(channels, 1)
+    SET_IF(samplerate, 44100)
+    SET_IF(bitspersample, 16)
+    SET_IF(totaltime, info.musicTimeInSec*1000)
+    SET_IF(format, AE_FMT_S16NE)
     *format = AE_FMT_S16NE;
-    *channelinfo = NULL;
-    *bitrate = 0;
+    static enum AEChannel map[3] = {
+	    AE_CH_FL, AE_CH_FR, AE_CH_NULL
+    };
+    SET_IF(channelinfo, map)
+    SET_IF(bitrate, 0)
+
     return pMusic;
   }
 
@@ -152,6 +176,9 @@ void* Init(const char* strFile, unsigned int filecache, int* channels,
 
 int ReadPCM(void* context, uint8_t* pBuffer, int size, int *actualsize)
 {
+  if (!context || !pBuffer || !actualsize)
+    return 1;
+
   if (ymMusicCompute((YMMUSIC*)context,(ymsample*)pBuffer,size/2))
   {
     *actualsize = size;
@@ -163,6 +190,9 @@ int ReadPCM(void* context, uint8_t* pBuffer, int size, int *actualsize)
 
 int64_t Seek(void* context, int64_t time)
 {
+  if (!context)
+    return 0;
+
   if (ymMusicIsSeekable((YMMUSIC*)context))
   {
     ymMusicSeek((YMMUSIC*)context, time);
@@ -174,6 +204,9 @@ int64_t Seek(void* context, int64_t time)
 
 bool DeInit(void* context)
 {
+  if (!context)
+    return true;
+
   ymMusicStop((YMMUSIC*)context);
   ymMusicDestroy((YMMUSIC*)context);
 
@@ -182,29 +215,42 @@ bool DeInit(void* context)
 
 bool ReadTag(const char* strFile, char* title, char* artist, int* length)
 {
-  YMMUSIC *pMusic = (YMMUSIC*)new CYmMusic;
+  if (!strFile)
+    return false;
 
   void* file = XBMC->OpenFile(strFile,0);
   if (!file)
     return false;
+
   int len = XBMC->GetFileLength(file);
   char *data = new char[len];
+  YMMUSIC *pMusic = (YMMUSIC*)new CYmMusic;
+
+  if (!data || !pMusic)
+  {
+    XBMC->CloseFile(file);
+    return false;
+  }
+
   XBMC->ReadFile(file, data, len);
   XBMC->CloseFile(file);
 
-  *length = 0;
+  SET_IF(length, 0)
   if (ymMusicLoadMemory(pMusic, data, len))
   {
     ymMusicInfo_t info;
     ymMusicGetInfo(pMusic, &info);
-    strcpy(title, info.pSongName);
-    strcpy(artist, info.pSongAuthor);
-    *length = info.musicTimeInSec;
+    if (title)
+      strcpy(title, info.pSongName);
+    if (artist)
+      strcpy(artist, info.pSongAuthor);
+    SET_IF(length, info.musicTimeInSec);
   }
   delete[] data;
 
   ymMusicDestroy(pMusic);
-  return *length != 0;
+
+  return length?(*length != 0):false;
 }
 
 int TrackCount(const char* strFile)
