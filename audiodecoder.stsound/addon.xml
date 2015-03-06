@@ -12,7 +12,11 @@
     name="ym"
     extension=".ym"
     tags="true"
-    library_linux="audiodecoder.stsound.so"/>
+    library_linux="audiodecoder.stsound.so"
+    library_osx="audiodecoder.stsound.dylib"
+    library_freebsd="audiodecoder.stsound.so"
+    library_windx="audiodecoder.stsound.dll"
+    library_android="libaudiodecoder.stsound.so"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">YM (spectrum) Audio Decoder</summary>
     <description lang="en">YM (spectrum) Audio Decoder</description>
