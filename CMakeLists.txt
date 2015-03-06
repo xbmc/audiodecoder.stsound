@@ -13,7 +13,11 @@ include_directories(${kodiplatform_INCLUDE_DIRS}
                     ${KODI_INCLUDE_DIR}
                     ${PROJECT_SOURCE_DIR}/lib/stsound/StSoundLibrary)
 
-add_definitions(-D_LINUX)
+if(WIN32)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+else()
+  add_definitions(-D_LINUX)
+endif()
 
 set(STSOUND_SOURCES src/YMCodec.cpp
                     lib/stsound/StSoundLibrary/digidrum.cpp
