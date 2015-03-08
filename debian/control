@@ -1,0 +1,21 @@
+Source: kodi-audiodecoder-stsound
+Priority: extra
+Maintainer: Arne Morten Kvarving <cptspiff@gmail.com>
+Build-Depends: debhelper (>= 8.0.0), cmake, kodi-audiodecoder-dev,
+               kodi-addon-dev, libkodiplatform-dev
+Standards-Version: 3.9.2
+Section: libs
+
+Package: kodi-audiodecoder-stsound
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: StSound audio decoder for Kodi
+  StSound audio decoder for Kodi
+
+Package: kodi-audiodecoder-stsound-dbg
+Section: debug
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: debug symbols for StSound audio decoder for Kodi
+  debug symbols for StSound audio decoder for Kodi
