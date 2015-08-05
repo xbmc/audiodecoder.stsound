@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="audiodecoder.ym"
-  version="1.0.1"
+  version="1.0.2"
   name="YM Audio Decoder"
   provider-name="spiff">
   <requires>
@@ -12,14 +12,10 @@
     name="ym"
     extension=".ym"
     tags="true"
-    library_linux="audiodecoder.stsound.so"
-    library_osx="audiodecoder.stsound.dylib"
-    library_freebsd="audiodecoder.stsound.so"
-    library_windx="audiodecoder.stsound.dll"
-    library_android="libaudiodecoder.stsound.so"/>
+    library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">YM (spectrum) Audio Decoder</summary>
     <description lang="en">YM (spectrum) Audio Decoder</description>
-    <platform>all</platform>
+    <platform>@PLATFORM@</platform>
   </extension>
 </addon>
