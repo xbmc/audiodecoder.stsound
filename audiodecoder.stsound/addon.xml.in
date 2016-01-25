@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="audiodecoder.ym"
-  version="1.0.2"
+  version="1.0.3"
   name="YM Audio Decoder"
   provider-name="spiff">
   <requires>
