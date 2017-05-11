@@ -29,6 +29,13 @@ set(STSOUND_SOURCES src/YMCodec.cpp
                     lib/stsound/StSoundLibrary/YmMusic.cpp
                     lib/stsound/StSoundLibrary/YmUserInterface.cpp)
 
+set(STSOUND_HEADERS lib/stsound/StSoundLibrary/digidrum.h
+                    lib/stsound/StSoundLibrary/StSoundLibrary.h
+                    lib/stsound/StSoundLibrary/Ym2149Ex.h
+                    lib/stsound/StSoundLibrary/YmLoad.h
+                    lib/stsound/StSoundLibrary/YmMusic.h
+                    lib/stsound/StSoundLibrary/YmTypes.h)
+
 set(DEPLIBS ${p8-platform_LIBRARIES})
 
 build_addon(audiodecoder.stsound STSOUND DEPLIBS)
