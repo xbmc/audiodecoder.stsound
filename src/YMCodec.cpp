@@ -26,7 +26,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 
-#include "kodi_audiodec_dll.h"
+#include "kodi/addon-instance/AudioDecoder.h"
 
 ADDON::CHelper_libXBMC_addon *XBMC           = NULL;
 
