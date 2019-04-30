@@ -8,10 +8,8 @@ enable_language(CXX)
 
 find_package(Kodi REQUIRED)
 find_package(kodiplatform REQUIRED)
-find_package(p8-platform REQUIRED)
 
 include_directories(${kodiplatform_INCLUDE_DIRS}
-                    ${p8-platform_INCLUDE_DIRS}
                     ${KODI_INCLUDE_DIR}
                     ${PROJECT_SOURCE_DIR}/lib/stsound/StSoundLibrary)
 
@@ -35,8 +33,6 @@ set(STSOUND_HEADERS lib/stsound/StSoundLibrary/digidrum.h
                     lib/stsound/StSoundLibrary/YmLoad.h
                     lib/stsound/StSoundLibrary/YmMusic.h
                     lib/stsound/StSoundLibrary/YmTypes.h)
-
-set(DEPLIBS ${p8-platform_LIBRARIES})
 
 build_addon(audiodecoder.stsound STSOUND DEPLIBS)
 
