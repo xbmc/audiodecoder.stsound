@@ -25,8 +25,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-class CYMCodec : public kodi::addon::CInstanceAudioDecoder,
-                 public kodi::addon::CAddonBase
+class ATTRIBUTE_HIDDEN CYMCodec : public kodi::addon::CInstanceAudioDecoder
 {
 public:
   CYMCodec(KODI_HANDLE instance) :
