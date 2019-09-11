@@ -13,7 +13,7 @@
     library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">YM (spectrum) Audio Decoder</summary>
-    <description lang="en">YM (spectrum) Audio Decoder</description>
+    <description lang="en">YM (YM2149 Music) is an audio format that logs instructions sent to an AY-3-8910 or YM2149 chip. Playback occurs by emulating the chips and sending the logged data to them. Because the format merely logs the instructions to the chip, it doesn't preserve the original content of the music format.</description>
     <platform>@PLATFORM@</platform>
   </extension>
 </addon>
