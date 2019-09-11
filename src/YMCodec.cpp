@@ -25,8 +25,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-class CYMCodec : public kodi::addon::CInstanceAudioDecoder,
-                 public kodi::addon::CAddonBase
+class ATTRIBUTE_HIDDEN CYMCodec : public kodi::addon::CInstanceAudioDecoder
 {
 public:
   CYMCodec(KODI_HANDLE instance) :
@@ -41,11 +40,11 @@ public:
     }
   }
 
-  virtual bool Init(const std::string& filename, unsigned int filecache,
-                    int& channels, int& samplerate,
-                    int& bitspersample, int64_t& totaltime,
-                    int& bitrate, AEDataFormat& format,
-                    std::vector<AEChannel>& channellist) override
+  bool Init(const std::string& filename, unsigned int filecache,
+            int& channels, int& samplerate,
+            int& bitspersample, int64_t& totaltime,
+            int& bitrate, AEDataFormat& format,
+            std::vector<AEChannel>& channellist) override
   {
     m_tune = ymMusicCreate();
     if (!m_tune)
@@ -88,7 +87,7 @@ public:
     return false;
   }
 
-  virtual int ReadPCM(uint8_t* buffer, int size, int& actualsize) override
+  int ReadPCM(uint8_t* buffer, int size, int& actualsize) override
   {
     if (ymMusicCompute(m_tune,(ymsample*)buffer,size/2))
     {
@@ -99,7 +98,7 @@ public:
       return 1;
   }
 
-  virtual int64_t Seek(int64_t time) override
+  int64_t Seek(int64_t time) override
   {
     if (ymMusicIsSeekable(m_tune))
     {
@@ -110,8 +109,8 @@ public:
     return 0;
   }
 
-  virtual bool ReadTag(const std::string& filename, std::string& title,
-                       std::string& artist, int& length) override
+  bool ReadTag(const std::string& filename, std::string& title,
+               std::string& artist, int& length) override
   {
     YMMUSIC* tune = ymMusicCreate();
     kodi::vfs::CFile file;
@@ -153,15 +152,13 @@ private:
 class ATTRIBUTE_HIDDEN CMyAddon : public kodi::addon::CAddonBase
 {
 public:
-  CMyAddon() { }
-  virtual ADDON_STATUS CreateInstance(int instanceType, std::string instanceID, KODI_HANDLE instance, KODI_HANDLE& addonInstance) override
+  CMyAddon() = default;
+  ADDON_STATUS CreateInstance(int instanceType, std::string instanceID, KODI_HANDLE instance, KODI_HANDLE& addonInstance) override
   {
     addonInstance = new CYMCodec(instance);
     return ADDON_STATUS_OK;
   }
-  virtual ~CMyAddon()
-  {
-  }
+  virtual ~CMyAddon() = default;
 };
 
 

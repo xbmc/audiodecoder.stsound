@@ -2,31 +2,37 @@
 
 	ST-Sound ( YM files player library )
 
-	Copyright (C) 1995-1999 Arnaud Carre ( http://leonard.oxg.free.fr )
-
 	Extended YM-2149 Emulator, with ATARI music demos effects.
 	(SID-Like, Digidrum, Sync Buzzer, Sinus SID and Pattern SID)
 
 -----------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
-
-	This file is part of ST-Sound
-
-	ST-Sound is free software; you can redistribute it and/or modify
-	it under the terms of the GNU Lesser General Public License as published by
-	the Free Software Foundation; either version 3 of the License, or
-	(at your option) any later version.
-
-	ST-Sound is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU Lesser General Public License for more details.
-
-	You should have received a copy of the GNU Lesser General Public License
-	along with ST-Sound; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
+* ST-Sound, ATARI-ST Music Emulator
+* Copyright (c) 1995-1999 Arnaud Carre ( http://leonard.oxg.free.fr )
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions
+* are met:
+* 1. Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+* ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+* OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+* LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+* SUCH DAMAGE.
+*
 -----------------------------------------------------------------------------*/
 
 #include "YmTypes.h"
@@ -234,6 +240,8 @@ ymu32 CYm2149Ex::envStepCompute(ymu8 rHigh,ymu8 rLow)
 
 void	CYm2149Ex::reset(void)
 {
+
+	memset( registers, 0, sizeof(registers) );
 
 	for (int i=0;i<14;i++)
 		writeRegister(i,0);
@@ -556,7 +564,7 @@ void	CYm2149Ex::syncBuzzerStart(ymint timerFreq,ymint _envShape)
 #else
 		ymfloat tmp = (ymfloat)timerFreq*((ymfloat)(1<<31))/(ymfloat)replayFrequency;
 #endif
-		envShape = envShape&15;
+		envShape = _envShape&15;
 		syncBuzzerStep = (ymu32)tmp;
 		syncBuzzerPhase = 0;
 		bSyncBuzzer = YMTRUE;
