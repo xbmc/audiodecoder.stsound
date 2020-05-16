@@ -15,8 +15,8 @@
 class ATTRIBUTE_HIDDEN CYMCodec : public kodi::addon::CInstanceAudioDecoder
 {
 public:
-  CYMCodec(KODI_HANDLE instance) :
-    CInstanceAudioDecoder(instance) {}
+  CYMCodec(KODI_HANDLE instance, const std::string& version) :
+    CInstanceAudioDecoder(instance, version) {}
 
   virtual ~CYMCodec()
   {
@@ -140,9 +140,9 @@ class ATTRIBUTE_HIDDEN CMyAddon : public kodi::addon::CAddonBase
 {
 public:
   CMyAddon() = default;
-  ADDON_STATUS CreateInstance(int instanceType, std::string instanceID, KODI_HANDLE instance, KODI_HANDLE& addonInstance) override
+  ADDON_STATUS CreateInstance(int instanceType, const std::string& instanceID, KODI_HANDLE instance, const std::string& version, KODI_HANDLE& addonInstance) override
   {
-    addonInstance = new CYMCodec(instance);
+    addonInstance = new CYMCodec(instance, version);
     return ADDON_STATUS_OK;
   }
   virtual ~CMyAddon() = default;
