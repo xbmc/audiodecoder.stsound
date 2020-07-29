@@ -5,141 +5,144 @@
  *  See LICENSE.md for more information.
  */
 
-#include <kodi/addon-instance/AudioDecoder.h>
+#include "YMCodec.h"
+
 #include <kodi/Filesystem.h>
-#include "StSoundLibrary.h"
-#include "YmMusic.h"
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
-class ATTRIBUTE_HIDDEN CYMCodec : public kodi::addon::CInstanceAudioDecoder
+CYMCodec::CYMCodec(KODI_HANDLE instance, const std::string& version)
+  : CInstanceAudioDecoder(instance, version)
 {
-public:
-  CYMCodec(KODI_HANDLE instance, const std::string& version) :
-    CInstanceAudioDecoder(instance, version) {}
+}
 
-  virtual ~CYMCodec()
+CYMCodec::~CYMCodec()
+{
+  if (m_tune)
   {
-    if (m_tune)
-    {
-      ymMusicStop(m_tune);
-      ymMusicDestroy(m_tune);
-    }
+    ymMusicStop(m_tune);
+    ymMusicDestroy(m_tune);
   }
+}
 
-  bool Init(const std::string& filename, unsigned int filecache,
-            int& channels, int& samplerate,
-            int& bitspersample, int64_t& totaltime,
-            int& bitrate, AudioEngineDataFormat& format,
-            std::vector<AudioEngineChannel>& channellist) override
+bool CYMCodec::Init(const std::string& filename,
+                    unsigned int filecache,
+                    int& channels,
+                    int& samplerate,
+                    int& bitspersample,
+                    int64_t& totaltime,
+                    int& bitrate,
+                    AudioEngineDataFormat& format,
+                    std::vector<AudioEngineChannel>& channellist)
+{
+  m_tune = ymMusicCreate();
+  if (!m_tune)
+    return false;
+
+  kodi::vfs::CFile file;
+  if (!file.OpenFile(filename))
+    return false;
+
+  int len = file.GetLength();
+  char* data = new char[len];
+  if (!data)
   {
-    m_tune = ymMusicCreate();
-    if (!m_tune)
-      return false;
-
-    kodi::vfs::CFile file;
-    if (!file.OpenFile(filename))
-      return false;
-
-    int len = file.GetLength();
-    char *data = new char[len];
-    if (!data)
-    {
-      file.Close();
-      ymMusicDestroy(m_tune);
-      return false;
-    }
-    file.Read(data, len);
     file.Close();
-
-    int res = ymMusicLoadMemory(m_tune, data, len);
-    delete[] data;
-    if (res)
-    {
-      ymMusicSetLoopMode(m_tune, YMFALSE);
-      ymMusicPlay(m_tune);
-      ymMusicInfo_t info;
-      ymMusicGetInfo(m_tune, &info);
-
-      channels = 1;
-      samplerate = 44100;
-      bitspersample = 16;
-      totaltime =  info.musicTimeInSec*1000;
-      format = AUDIOENGINE_FMT_S16NE;
-      channellist = { AUDIOENGINE_CH_FL, AUDIOENGINE_CH_FR };
-      bitrate = 0;
-      return true;
-    }
-
+    ymMusicDestroy(m_tune);
     return false;
   }
+  file.Read(data, len);
+  file.Close();
 
-  int ReadPCM(uint8_t* buffer, int size, int& actualsize) override
+  int res = ymMusicLoadMemory(m_tune, data, len);
+  delete[] data;
+  if (res)
   {
-    if (ymMusicCompute(m_tune,(ymsample*)buffer,size/2))
-    {
-      actualsize = size;
-      return 0;
-    }
-    else
-      return 1;
+    ymMusicSetLoopMode(m_tune, YMFALSE);
+    ymMusicPlay(m_tune);
+    ymMusicInfo_t info;
+    ymMusicGetInfo(m_tune, &info);
+
+    channels = 1;
+    samplerate = 44100;
+    bitspersample = 16;
+    totaltime = info.musicTimeInSec * 1000;
+    format = AUDIOENGINE_FMT_S16NE;
+    channellist = {AUDIOENGINE_CH_FL, AUDIOENGINE_CH_FR};
+    bitrate = 0;
+    return true;
   }
 
-  int64_t Seek(int64_t time) override
-  {
-    if (ymMusicIsSeekable(m_tune))
-    {
-      ymMusicSeek(m_tune, time);
-      return time;
-    }
+  return false;
+}
 
+int CYMCodec::ReadPCM(uint8_t* buffer, int size, int& actualsize)
+{
+  if (ymMusicCompute(m_tune, (ymsample*)buffer, size / 2))
+  {
+    actualsize = size;
     return 0;
   }
+  else
+    return 1;
+}
 
-  bool ReadTag(const std::string& filename, kodi::addon::AudioDecoderInfoTag& tag) override
+int64_t CYMCodec::Seek(int64_t time)
+{
+  if (ymMusicIsSeekable(m_tune))
   {
-    YMMUSIC* tune = ymMusicCreate();
-    kodi::vfs::CFile file;
-    if (!file.OpenFile(filename))
-      return false;
-
-    int len = file.GetLength();
-    char *data = new char[len];
-    if (!data)
-    {
-      file.Close();
-      ymMusicDestroy(tune);
-      return false;
-    }
-    file.Read(data, len);
-    file.Close();
-
-    tag.SetDuration(0);
-    if (ymMusicLoadMemory(tune, data, len))
-    {
-      ymMusicInfo_t info;
-      ymMusicGetInfo(tune, &info);
-      tag.SetTitle(info.pSongName);
-      tag.SetArtist(info.pSongAuthor);
-      tag.SetDuration(info.musicTimeInSec);
-    }
-    delete[] data;
-
-    ymMusicDestroy(tune);
-
-    return tag.GetDuration() != 0;
+    ymMusicSeek(m_tune, time);
+    return time;
   }
 
-private:
-  YMMUSIC* m_tune = nullptr;
-};
+  return 0;
+}
 
+bool CYMCodec::ReadTag(const std::string& filename, kodi::addon::AudioDecoderInfoTag& tag)
+{
+  YMMUSIC* tune = ymMusicCreate();
+  kodi::vfs::CFile file;
+  if (!file.OpenFile(filename))
+    return false;
+
+  int len = file.GetLength();
+  char* data = new char[len];
+  if (!data)
+  {
+    file.Close();
+    ymMusicDestroy(tune);
+    return false;
+  }
+  file.Read(data, len);
+  file.Close();
+
+  tag.SetDuration(0);
+  if (ymMusicLoadMemory(tune, data, len))
+  {
+    ymMusicInfo_t info;
+    ymMusicGetInfo(tune, &info);
+    tag.SetTitle(info.pSongName);
+    tag.SetArtist(info.pSongAuthor);
+    tag.SetDuration(info.musicTimeInSec);
+  }
+  delete[] data;
+
+  ymMusicDestroy(tune);
+
+  return tag.GetDuration() != 0;
+}
+
+//------------------------------------------------------------------------------
 
 class ATTRIBUTE_HIDDEN CMyAddon : public kodi::addon::CAddonBase
 {
 public:
   CMyAddon() = default;
-  ADDON_STATUS CreateInstance(int instanceType, const std::string& instanceID, KODI_HANDLE instance, const std::string& version, KODI_HANDLE& addonInstance) override
+  ADDON_STATUS CreateInstance(int instanceType,
+                              const std::string& instanceID,
+                              KODI_HANDLE instance,
+                              const std::string& version,
+                              KODI_HANDLE& addonInstance) override
   {
     addonInstance = new CYMCodec(instance, version);
     return ADDON_STATUS_OK;
@@ -147,5 +150,4 @@ public:
   virtual ~CMyAddon() = default;
 };
 
-
-ADDONCREATOR(CMyAddon);
+ADDONCREATOR(CMyAddon)
