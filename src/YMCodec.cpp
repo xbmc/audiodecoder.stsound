@@ -30,8 +30,8 @@ public:
   bool Init(const std::string& filename, unsigned int filecache,
             int& channels, int& samplerate,
             int& bitspersample, int64_t& totaltime,
-            int& bitrate, AEDataFormat& format,
-            std::vector<AEChannel>& channellist) override
+            int& bitrate, AudioEngineDataFormat& format,
+            std::vector<AudioEngineChannel>& channellist) override
   {
     m_tune = ymMusicCreate();
     if (!m_tune)
@@ -65,8 +65,8 @@ public:
       samplerate = 44100;
       bitspersample = 16;
       totaltime =  info.musicTimeInSec*1000;
-      format = AE_FMT_S16NE;
-      channellist = { AE_CH_FL, AE_CH_FR };
+      format = AUDIOENGINE_FMT_S16NE;
+      channellist = { AUDIOENGINE_CH_FL, AUDIOENGINE_CH_FR };
       bitrate = 0;
       return true;
     }
@@ -96,8 +96,7 @@ public:
     return 0;
   }
 
-  bool ReadTag(const std::string& filename, std::string& title,
-               std::string& artist, int& length) override
+  bool ReadTag(const std::string& filename, kodi::addon::AudioDecoderInfoTag& tag) override
   {
     YMMUSIC* tune = ymMusicCreate();
     kodi::vfs::CFile file;
@@ -115,20 +114,20 @@ public:
     file.Read(data, len);
     file.Close();
 
-    length = 0;
+    tag.SetDuration(0);
     if (ymMusicLoadMemory(tune, data, len))
     {
       ymMusicInfo_t info;
       ymMusicGetInfo(tune, &info);
-      title = info.pSongName;
-      artist = info.pSongAuthor;
-      length = info.musicTimeInSec;
+      tag.SetTitle(info.pSongName);
+      tag.SetArtist(info.pSongAuthor);
+      tag.SetDuration(info.musicTimeInSec);
     }
     delete[] data;
 
     ymMusicDestroy(tune);
 
-    return length != 0;
+    return tag.GetDuration() != 0;
   }
 
 private:
