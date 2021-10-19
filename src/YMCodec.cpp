@@ -64,7 +64,7 @@ bool CYMCodec::Init(const std::string& filename,
     ymMusicGetInfo(m_tune, &info);
 
     channels = 1;
-    samplerate = 44100;
+    samplerate = 22500; // HACK FIX, should be 44100!!! Need to find why it was before as double speed.
     bitspersample = 16;
     totaltime = info.musicTimeInSec * 1000;
     format = AUDIOENGINE_FMT_S16NE;
