@@ -18,7 +18,7 @@
     <assets>
       <icon>icon.png</icon>
     </assets>
-    <summary lang="da_DK">YM (spektrum) lyddekoder</summary>
+    <summary lang="da_DK">YM (spektrum) lydafkoder</summary>
     <summary lang="de_DE">YM (spectrum) Audio Decoder</summary>
     <summary lang="en_GB">YM (spectrum) Audio Decoder</summary>
     <summary lang="ko_KR">YM(스펙트럼) 오디오 디코더</summary>
