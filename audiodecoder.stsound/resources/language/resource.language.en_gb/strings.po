@@ -23,3 +23,9 @@ msgstr ""
 msgctxt "Addon Description"
 msgid "YM (YM2149 Music) is an audio format that logs instructions sent to an AY-3-8910 or YM2149 chip. Playback occurs by emulating the chips and sending the logged data to them. Because the format merely logs the instructions to the chip, it doesn't preserve the original content of the music format."
 msgstr ""
+
+#. Supported file extension description about ".ym"
+#: audiodecoder.stsound/addon.xml.in
+msgctxt "#30100"
+msgid "Audio file used by the Atari ST, an older computer system that was discontinued in the early 1990s."
+msgstr ""

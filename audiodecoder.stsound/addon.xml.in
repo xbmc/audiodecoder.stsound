@@ -8,9 +8,14 @@
   <extension
     point="kodi.audiodecoder"
     name="ym"
-    extension=".ym"
     tags="true"
-    library_@PLATFORM@="@LIBRARY_FILENAME@"/>
+    library_@PLATFORM@="@LIBRARY_FILENAME@">
+    <support>
+      <extension name=".ym">
+        <description>30100</description>
+      </extension>
+    </support>
+  </extension>
   <extension point="xbmc.addon.metadata">
     <platform>@PLATFORM@</platform>
     <license>GPL-2.0-or-later</license>
