@@ -64,7 +64,7 @@ bool CYMCodec::Init(const std::string& filename,
     ymMusicGetInfo(m_tune, &info);
 
     channels = 1;
-    samplerate = 44100;
+    samplerate = 22500; // HACK FIX, should be 44100!!! Need to find why it was before as double speed.
     bitspersample = 16;
     totaltime = info.musicTimeInSec * 1000;
     format = AUDIOENGINE_FMT_S16NE;
@@ -76,15 +76,15 @@ bool CYMCodec::Init(const std::string& filename,
   return false;
 }
 
-int CYMCodec::ReadPCM(uint8_t* buffer, int size, int& actualsize)
+int CYMCodec::ReadPCM(uint8_t* buffer, size_t size, size_t& actualsize)
 {
   if (ymMusicCompute(m_tune, (ymsample*)buffer, size / 2))
   {
     actualsize = size;
-    return 0;
+    return AUDIODECODER_READ_SUCCESS;
   }
   else
-    return 1;
+    return AUDIODECODER_READ_EOF;
 }
 
 int64_t CYMCodec::Seek(int64_t time)
@@ -134,7 +134,7 @@ bool CYMCodec::ReadTag(const std::string& filename, kodi::addon::AudioDecoderInf
 
 //------------------------------------------------------------------------------
 
-class ATTRIBUTE_HIDDEN CMyAddon : public kodi::addon::CAddonBase
+class ATTR_DLL_LOCAL CMyAddon : public kodi::addon::CAddonBase
 {
 public:
   CMyAddon() = default;
