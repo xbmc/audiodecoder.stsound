@@ -11,8 +11,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-CYMCodec::CYMCodec(KODI_HANDLE instance, const std::string& version)
-  : CInstanceAudioDecoder(instance, version)
+CYMCodec::CYMCodec(const kodi::addon::IInstanceInfo& instance) : CInstanceAudioDecoder(instance)
 {
 }
 
@@ -64,7 +63,8 @@ bool CYMCodec::Init(const std::string& filename,
     ymMusicGetInfo(m_tune, &info);
 
     channels = 1;
-    samplerate = 22500; // HACK FIX, should be 44100!!! Need to find why it was before as double speed.
+    samplerate =
+        22500; // HACK FIX, should be 44100!!! Need to find why it was before as double speed.
     bitspersample = 16;
     totaltime = info.musicTimeInSec * 1000;
     format = AUDIOENGINE_FMT_S16NE;
@@ -138,13 +138,10 @@ class ATTR_DLL_LOCAL CMyAddon : public kodi::addon::CAddonBase
 {
 public:
   CMyAddon() = default;
-  ADDON_STATUS CreateInstance(int instanceType,
-                              const std::string& instanceID,
-                              KODI_HANDLE instance,
-                              const std::string& version,
-                              KODI_HANDLE& addonInstance) override
+  ADDON_STATUS CreateInstance(const kodi::addon::IInstanceInfo& instance,
+                              KODI_ADDON_INSTANCE_HDL& hdl) override
   {
-    addonInstance = new CYMCodec(instance, version);
+    hdl = new CYMCodec(instance);
     return ADDON_STATUS_OK;
   }
   virtual ~CMyAddon() = default;

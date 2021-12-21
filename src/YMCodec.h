@@ -15,7 +15,7 @@
 class ATTR_DLL_LOCAL CYMCodec : public kodi::addon::CInstanceAudioDecoder
 {
 public:
-  CYMCodec(KODI_HANDLE instance, const std::string& version);
+  CYMCodec(const kodi::addon::IInstanceInfo& instance);
   virtual ~CYMCodec();
 
   bool Init(const std::string& filename,
