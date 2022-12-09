@@ -24,6 +24,7 @@
     <summary lang="en_GB">YM (spectrum) Audio Decoder</summary>
     <summary lang="es_ES">Decodificador de Audio YM (spectrum)</summary>
     <summary lang="es_MX">Decodificador de audio YM (spectrum)</summary>
+    <summary lang="fr_FR">Décodeur audio YM (spectrum)</summary>
     <summary lang="it_IT">YM (spectrum) Audio Decoder</summary>
     <summary lang="ko_KR">YM(스펙트럼) 오디오 디코더</summary>
     <summary lang="ru_RU">Аудиодекодер YM (спектр)</summary>
@@ -33,6 +34,7 @@
     <description lang="de_DE">YM (YM2149 Music) ist ein Audioformat, das Anweisungen protokolliert, die an einen AY-3-8910- oder YM2149-Chip gesendet werden. Die Wiedergabe erfolgt durch Emulieren der Chips und Senden der protokollierten Daten an diese. Da das Format lediglich die Anweisungen auf dem Chip protokolliert, bleibt der ursprüngliche Inhalt des Musikformats nicht erhalten.</description>
     <description lang="en_GB">YM (YM2149 Music) is an audio format that logs instructions sent to an AY-3-8910 or YM2149 chip. Playback occurs by emulating the chips and sending the logged data to them. Because the format merely logs the instructions to the chip, it doesn&apos;t preserve the original content of the music format.</description>
     <description lang="es_ES">YM (Música YM2149) es un formato de audio que registra instrucciones enviadas a un chip AY-3-8910 o TM2149. La reproducción funciona emulando esos chips y registrando esas instrucciones. Debido a que el formato simplemente registra las instrucciones en el chip, no conserva el contenido original del formato de música.</description>
+    <description lang="fr_FR">YM (YM2149 Music) est un format audio qui enregistre les instructions envoyées à une puce AY-3-8910 ou YM2149. La lecture se produit en émulant les puces et en leur envoyant les données enregistrées. Étant donné que le format enregistre simplement les instructions sur la puce, il ne conserve pas le contenu original du format musical.</description>
     <description lang="it_IT">YM (YM2149 Music) è un formato audio che registra le istruzioni inviate a un chip AY-3-8910 o YM2149. La riproduzione avviene emulando i chip e inviando loro i dati registrati. Poiché il formato registra semplicemente le istruzioni sul chip, non conserva il contenuto originale del formato musicale.</description>
     <description lang="ko_KR">YM (YM2149 Music)은 AY-3-8910 또는 YM2149 칩으로 전송된 명령을 기록하는 오디오 형식입니다. 칩을 에뮬레이트하고 기록된 데이터를 칩으로 전송하여 재생합니다. 이 포맷은 명령을 칩에 기록만 하므로, 음악 형식의 원래 내용을 보존하지 않습니다.</description>
     <description lang="ru_RU">YM (YM2149 Music) - это аудиоформат, который регистрирует инструкции, отправленные на чип AY-3-8910 или YM2149. Воспроизведение происходит путем эмуляции микросхем и отправки на них записанных данных. Поскольку формат просто регистрирует инструкции, передаваемые чипу, он не сохраняет оригинальное содержание музыкального формата.</description>
